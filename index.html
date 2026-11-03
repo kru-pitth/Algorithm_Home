@@ -44,7 +44,7 @@ textarea{width:100%;min-height:70px;font:inherit;border-radius:10px;border:1px s
 <body>
 <header>
 <h1>🏠 บ้านเธอ บ้านฉัน 🏠</h1>
-<p>เลือกเครื่องมือ แล้วลากบนตาราง จุดจะเกาะที่พิกัดจำนวนเต็มเสมอ</p>
+<p>เลือกเครื่องมือ แล้วลากเส้นหรือวาดสี่เหลี่ยมลงบนตาราง</p>
 </header>
 <div class="wrap">
 <section class="card">
@@ -69,7 +69,7 @@ textarea{width:100%;min-height:70px;font:inherit;border-radius:10px;border:1px s
 <div class="m" id="m1"><h3>ภารกิจ 1: วาดสี่เหลี่ยมมุมฉาก</h3><div id="l1"></div></div>
 <div class="m" id="m2"><h3>ภารกิจ 2: วาดเส้นตรงตามจุดที่กำหนด</h3><div id="l2"></div></div>
 <div class="m" id="m3"><h3>ภารกิจ 3: วาดสี่เหลี่ยมอีกรูป</h3><div id="l3"></div>
-<p class="small">เปรียบเทียบกับรูปของเพื่อน เหมือนหรือต่างกันอย่างไร เพราะเหตุใด</p>
+
 </div>
 </aside>
 </div>
@@ -104,7 +104,7 @@ sel=keep;draw();
 var P=document.getElementById('pos');
 o.toBlob(function(b){
 if(!b){P.textContent='สร้างภาพไม่สำเร็จ';return}
-var name='house-coordinates.png';
+var name='My_Home.png';
 (async function(){
 var d=null;try{d=window.claude?await window.claude.use('downloads'):null}catch(e){}
 if(d){try{await d.save({filename:name,data:b});P.textContent='บันทึกภาพแล้ว'}catch(e){P.textContent=(e&&e.code==='declined')?'ยกเลิกการบันทึก':'ไม่สามารถบันทึกภาพได้ในหน้านี้'}}
