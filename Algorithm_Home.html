@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>บ้านเธอ บ้านฉัน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f8fc;--card:#fff;--text:#1d2b3a;--muted:#5d6f82;--line:#cfe3f3;--axis:#0a7cc9;--accent:#0a7cc9;--ok:#1a9b4b;--okbg:#e4f6ea;--border:#d5e0ea;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161d;--card:#18212b;--text:#e8eef4;--muted:#9fb0c1;--line:#2a3d50;--axis:#4db3f5;--accent:#4db3f5;--ok:#4cd081;--okbg:#17372494;--border:#2c3a48}}
+:root[data-theme="dark"]{--bg:#10161d;--card:#18212b;--text:#e8eef4;--muted:#9fb0c1;--line:#2a3d50;--axis:#4db3f5;--accent:#4db3f5;--ok:#4cd081;--okbg:#17372494;--border:#2c3a48}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Sarabun',system-ui,sans-serif;font-size:16px}
+header{padding:14px 16px 4px;text-align:center}
+h1{margin:0;font-size:1.4rem}
+header p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;padding:10px 14px 24px;max-width:1300px;margin:auto}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+button{font:inherit;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:#d23b3b}
+input[type=color]{width:42px;height:38px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:2px;cursor:pointer}
+.sw{display:flex;gap:5px}.sw i{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid var(--card);box-shadow:0 0 0 1px var(--border)}
+.cv{overflow-x:auto}
+canvas{display:block;width:100%;touch-action:none;border-radius:8px;background:var(--card)}
+#pos{margin-top:6px;color:var(--muted);font-size:.95rem;min-height:1.4em}
+.m{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px}
+.m h3{margin:0 0 6px;font-size:1rem}
+.m.done{background:var(--okbg);border-color:var(--ok)}
+.t{display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:.95rem}
+.t b{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;font-size:.8rem;color:#fff}
+.t.ok b{background:var(--ok);border-color:var(--ok)}
+.t.ok b::after{content:"✓"}
+textarea{width:100%;min-height:70px;font:inherit;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);padding:8px}
+#win{display:none;text-align:center;padding:12px;border-radius:12px;background:var(--okbg);border:1px solid var(--ok);margin-bottom:10px;font-weight:700}
+.small{color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+<h1>🏠 บ้านเธอ บ้านฉัน 🏠</h1>
+<p>เลือกเครื่องมือ แล้วลากบนตาราง จุดจะเกาะที่พิกัดจำนวนเต็มเสมอ</p>
+</header>
+<div class="wrap">
+<section class="card">
+<div class="toolbar">
+<button id="t-rect" class="on">▭ สี่เหลี่ยม</button>
+<button id="t-line">╱ เส้นตรง</button>
+<button id="t-sel">☝ เลือก/ปรับ</button>
+<input type="color" id="col" value="#e8453c" title="เปลี่ยนสี">
+<div class="sw" id="sw"></div>
+<button id="undo" title="ย้อนกลับ (Ctrl+Z)">↶ ย้อนกลับ</button>
+<button id="redo" title="ย้อนกลับมา (Ctrl+Y)">↷ ย้อนกลับมา</button>
+<button id="del" class="danger">🗑 ลบที่เลือก</button>
+<button id="clr" class="danger">ล้างทั้งหมด</button>
+<button id="exp" title="บันทึกภาพเป็นไฟล์ PNG">💾 บันทึกเป็นภาพ .png</button>
+</div>
+<div class="cv"><canvas id="cv"></canvas></div>
+<div id="pos">เลื่อนเมาส์/นิ้วบนตารางเพื่อดูพิกัด</div>
+<div class="small"></div>
+</section>
+<aside>
+<div id="win">🎉 เก่งมาก! ทำภารกิจครบทุกข้อแล้ว</div>
+<div class="m" id="m1"><h3>ภารกิจ 1: วาดสี่เหลี่ยมมุมฉาก</h3><div id="l1"></div></div>
+<div class="m" id="m2"><h3>ภารกิจ 2: วาดเส้นตรงตามจุดที่กำหนด</h3><div id="l2"></div></div>
+<div class="m" id="m3"><h3>ภารกิจ 3: วาดสี่เหลี่ยมอีกรูป</h3><div id="l3"></div>
+<p class="small">เปรียบเทียบกับรูปของเพื่อน เหมือนหรือต่างกันอย่างไร เพราะเหตุใด</p>
+</div>
+</aside>
+</div>
+<script>
+(function(){
+var XMIN=-2,XMAX=27,YMIN=-2,YMAX=19,W=XMAX-XMIN,H=YMAX-YMIN;
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var cs=30,shapes=[],sel=null,tool='rect',color='#e8453c',drag=null,hover=null,hist=['[]'],hi=0;
+var missions=[
+{id:'l1',items:[{t:'สี่เหลี่ยม มุมซ้ายล่าง (5,0) มุมขวาบน (15,10)',r:[5,0,15,10]}]},
+{id:'l2',items:[
+{t:'2.1 (5,10) และ (10,14)',l:[5,10,10,14]},{t:'2.2 (10,14) และ (15,10)',l:[10,14,15,10]},
+{t:'2.3 (15,0) และ (21,1)',l:[15,0,21,1]},{t:'2.4 (21,1) และ (21,11)',l:[21,1,21,11]},
+{t:'2.5 (21,11) และ (15,10)',l:[21,11,15,10]},{t:'2.6 (10,14) และ (16,15)',l:[10,14,16,15]},
+{t:'2.7 (16,15) และ (21,11)',l:[16,15,21,11]}]},
+{id:'l3',items:[{t:'สี่เหลี่ยม มุมซ้ายล่าง (8,0) มุมขวาบน (12,5)',r:[8,0,12,5]}]}];
+['#e8453c','#f5a623','#2e9e4f','#0a7cc9','#8e44ad','#222222'].forEach(function(c){
+var i=document.createElement('i');i.style.background=c;i.onclick=function(){setColor(c)};document.getElementById('sw').appendChild(i)});
+function setColor(c){color=c;document.getElementById('col').value=c;if(sel){sel.color=c;draw();commit()}}
+document.getElementById('col').oninput=function(e){setColor(e.target.value)};
+function setTool(t){tool=t;['rect','line','sel'].forEach(function(n){document.getElementById('t-'+n).classList.toggle('on',n===t)})}
+['rect','line','sel'].forEach(function(n){document.getElementById('t-'+n).onclick=function(){setTool(n)}});
+document.getElementById('del').onclick=del;
+document.getElementById('clr').onclick=function(){shapes=[];sel=null;update();commit()};
+document.getElementById('undo').onclick=function(){go(-1)};
+document.getElementById('redo').onclick=function(){go(1)};
+document.getElementById('exp').onclick=function(){
+var keep=sel;sel=null;draw();
+var o=document.createElement('canvas');o.width=cv.width;o.height=cv.height;var c=o.getContext('2d');
+c.fillStyle=css('--card');c.fillRect(0,0,o.width,o.height);c.drawImage(cv,0,0);
+sel=keep;draw();
+var P=document.getElementById('pos');
+o.toBlob(function(b){
+if(!b){P.textContent='สร้างภาพไม่สำเร็จ';return}
+var name='house-coordinates.png';
+(async function(){
+var d=null;try{d=window.claude?await window.claude.use('downloads'):null}catch(e){}
+if(d){try{await d.save({filename:name,data:b});P.textContent='บันทึกภาพแล้ว'}catch(e){P.textContent=(e&&e.code==='declined')?'ยกเลิกการบันทึก':'ไม่สามารถบันทึกภาพได้ในหน้านี้'}}
+else{var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();P.textContent='กำลังดาวน์โหลดภาพ...'}
+})();
+},'image/png')};
+function del(){if(sel){shapes=shapes.filter(function(s){return s!==sel});sel=null;update();commit()}}
+function commit(){var s=JSON.stringify(shapes);if(s===hist[hi])return;hist=hist.slice(0,hi+1);hist.push(s);hi++;hb()}
+function go(d){var n=hi+d;if(n<0||n>=hist.length)return;hi=n;shapes=JSON.parse(hist[hi]);sel=null;update();hb()}
+function hb(){document.getElementById('undo').disabled=hi<=0;document.getElementById('redo').disabled=hi>=hist.length-1}
+document.addEventListener('keydown',function(e){if(document.activeElement.tagName==='TEXTAREA')return;var k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();go(e.shiftKey?1:-1)}else if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();go(1)}});
+document.addEventListener('keydown',function(e){if((e.key==='Delete'||e.key==='Backspace')&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();del()}});
+
+function resize(){var w=cv.parentNode.clientWidth;cs=w/W;var d=window.devicePixelRatio||1;
+cv.style.height=(cs*H)+'px';cv.width=w*d;cv.height=cs*H*d;ctx.setTransform(d,0,0,d,0,0);draw()}
+window.addEventListener('resize',resize);
+function px(x){return (x-XMIN)*cs}function py(y){return (YMAX-y)*cs}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function norm(s){return {x1:Math.min(s.x1,s.x2),y1:Math.min(s.y1,s.y2),x2:Math.max(s.x1,s.x2),y2:Math.max(s.y1,s.y2)}}
+
+function draw(){
+var w=W*cs,h=H*cs;ctx.clearRect(0,0,w,h);
+ctx.lineWidth=1;ctx.strokeStyle=css('--line');ctx.beginPath();
+for(var x=XMIN;x<=XMAX;x++){ctx.moveTo(px(x),0);ctx.lineTo(px(x),h)}
+for(var y=YMIN;y<=YMAX;y++){ctx.moveTo(0,py(y));ctx.lineTo(w,py(y))}
+ctx.stroke();
+var ax=css('--axis'),tx=css('--text');
+ctx.strokeStyle=ax;ctx.fillStyle=ax;ctx.lineWidth=4;
+ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(0),py(YMAX-.5));ctx.moveTo(px(0),py(0));ctx.lineTo(px(XMAX-.5),py(0));ctx.stroke();
+tri(px(0),py(YMAX-.5),0);tri(px(XMAX-.5),py(0),1);
+ctx.font='bold '+Math.max(11,cs*.5)+'px Sarabun,sans-serif';ctx.fillStyle=tx;ctx.textAlign='center';
+ctx.fillText('y',px(0)+cs*.6,py(YMAX-.4));ctx.fillText('x',px(XMAX-.4),py(0)+cs*.9);
+ctx.fillText('(0,0)',px(0)-cs*.9,py(0)+cs*.8);
+for(var v=5;v<=25;v+=5){ctx.fillText(v,px(v),py(0)+cs*.85);ctx.fillRect(px(v)-2,py(0)-cs*.3,4,cs*.6)}
+for(var v=5;v<=15;v+=5){ctx.fillText(v,px(0)-cs*.7,py(v)+cs*.15);ctx.fillRect(px(0)-cs*.3,py(v)-2,cs*.6,4)}
+shapes.forEach(function(s){
+ctx.lineWidth=3;ctx.lineJoin='round';ctx.strokeStyle=s.color;ctx.fillStyle=s.color+'33';
+if(s.type==='rect'){var n=norm(s);ctx.fillRect(px(n.x1),py(n.y2),(n.x2-n.x1)*cs,(n.y2-n.y1)*cs);ctx.strokeRect(px(n.x1),py(n.y2),(n.x2-n.x1)*cs,(n.y2-n.y1)*cs)}
+else{ctx.beginPath();ctx.moveTo(px(s.x1),py(s.y1));ctx.lineTo(px(s.x2),py(s.y2));ctx.stroke()}
+if(s===sel)handles(s)});
+}
+function tri(x,y,r){ctx.beginPath();if(r){ctx.moveTo(x+cs*.5,y);ctx.lineTo(x-cs*.1,y-cs*.3);ctx.lineTo(x-cs*.1,y+cs*.3)}
+else{ctx.moveTo(x,y-cs*.5);ctx.lineTo(x-cs*.3,y+cs*.1);ctx.lineTo(x+cs*.3,y+cs*.1)}ctx.fill()}
+function pts(s){if(s.type==='line')return [[s.x1,s.y1],[s.x2,s.y2]];var n=norm(s);return [[n.x1,n.y1],[n.x2,n.y1],[n.x1,n.y2],[n.x2,n.y2]]}
+function handles(s){pts(s).forEach(function(p){ctx.beginPath();ctx.arc(px(p[0]),py(p[1]),7,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=s.color;ctx.stroke()})}
+
+function pos(e){var r=cv.getBoundingClientRect();var fx=(e.clientX-r.left)/cs+XMIN,fy=YMAX-(e.clientY-r.top)/cs;
+return {fx:fx,fy:fy,x:Math.max(XMIN,Math.min(XMAX,Math.round(fx))),y:Math.max(YMIN,Math.min(YMAX,Math.round(fy)))}}
+function segDist(p,s){var dx=s.x2-s.x1,dy=s.y2-s.y1,l=dx*dx+dy*dy,t=l?((p.fx-s.x1)*dx+(p.fy-s.y1)*dy)/l:0;t=Math.max(0,Math.min(1,t));
+return Math.hypot(p.fx-(s.x1+t*dx),p.fy-(s.y1+t*dy))}
+function hit(p){for(var i=shapes.length-1;i>=0;i--){var s=shapes[i];
+if(s.type==='line'){if(segDist(p,s)<.5)return s}
+else{var n=norm(s);if(p.fx>=n.x1-.4&&p.fx<=n.x2+.4&&p.fy>=n.y1-.4&&p.fy<=n.y2+.4)return s}}return null}
+
+cv.addEventListener('pointerdown',function(e){
+cv.setPointerCapture(e.pointerId);var p=pos(e);
+if(tool==='sel'){
+if(sel){var P=pts(sel);for(var i=0;i<P.length;i++){if(Math.hypot(p.fx-P[i][0],p.fy-P[i][1])<.8){
+if(sel.type==='line')drag={m:'end',i:i};
+else{var n=norm(sel);sel.x1=n.x1;sel.y1=n.y1;sel.x2=n.x2;sel.y2=n.y2;
+var ox=P[i][0]===n.x1?n.x2:n.x1,oy=P[i][1]===n.y1?n.y2:n.y1;drag={m:'corner',ax:ox,ay:oy}}return}}}
+var s=hit(p);sel=s;
+if(s){drag={m:'move',sx:p.x,sy:p.y,o:{x1:s.x1,y1:s.y1,x2:s.x2,y2:s.y2}};setColor2(s.color)}
+draw();return}
+var s={type:tool,x1:p.x,y1:p.y,x2:p.x,y2:p.y,color:color};shapes.push(s);sel=s;drag={m:'new'};draw()});
+function setColor2(c){document.getElementById('col').value=c;color=c}
+cv.addEventListener('pointermove',function(e){var p=pos(e);
+document.getElementById('pos').textContent='พิกัดที่ชี้: ('+p.x+', '+p.y+')'+(drag&&sel?'   |   '+desc(sel):'');
+if(!drag||!sel)return;
+if(drag.m==='new'){sel.x2=p.x;sel.y2=p.y}
+else if(drag.m==='end'){if(drag.i===0){sel.x1=p.x;sel.y1=p.y}else{sel.x2=p.x;sel.y2=p.y}}
+else if(drag.m==='corner'){sel.x1=drag.ax;sel.y1=drag.ay;sel.x2=p.x;sel.y2=p.y}
+else if(drag.m==='move'){var dx=p.x-drag.sx,dy=p.y-drag.sy,o=drag.o;sel.x1=o.x1+dx;sel.x2=o.x2+dx;sel.y1=o.y1+dy;sel.y2=o.y2+dy}
+draw()});
+function desc(s){if(s.type==='line')return 'เส้น ('+s.x1+','+s.y1+') ถึง ('+s.x2+','+s.y2+')';var n=norm(s);return 'สี่เหลี่ยม ซ้ายล่าง ('+n.x1+','+n.y1+') ขวาบน ('+n.x2+','+n.y2+')'}
+function end(){if(!drag)return;if(drag.m==='new'&&sel&&sel.x1===sel.x2&&sel.y1===sel.y2){shapes.pop();sel=null}drag=null;update();commit()}
+cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+
+function ok(it){return shapes.some(function(s){
+if(it.r){if(s.type!=='rect')return false;var n=norm(s);return n.x1===it.r[0]&&n.y1===it.r[1]&&n.x2===it.r[2]&&n.y2===it.r[3]}
+if(s.type!=='line')return false;var a=it.l;
+return (s.x1===a[0]&&s.y1===a[1]&&s.x2===a[2]&&s.y2===a[3])||(s.x1===a[2]&&s.y1===a[3]&&s.x2===a[0]&&s.y2===a[1])})}
+function update(){var all=true;
+missions.forEach(function(m){var d=true,box=document.getElementById(m.id);box.innerHTML='';
+m.items.forEach(function(it){var o=ok(it);if(!o)d=false;var r=document.createElement('div');r.className='t'+(o?' ok':'');
+r.innerHTML='<b></b><span>'+it.t+'</span>';box.appendChild(r)});
+document.getElementById(m.id.replace('l','m')).classList.toggle('done',d);if(!d)all=false});
+document.getElementById('win').style.display=all?'block':'none';draw()}
+resize();update();hb();
+})();
+</script>
+</body>
+</html>
